@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CardStatusEnum;
 use App\Enums\UserTypeEnum;
 use App\Mail\NewExpenseAlert;
 use App\Models\Card;
 use App\Models\Expense;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Illuminate\Testing\TestResponse;
@@ -111,7 +111,7 @@ class ExpenseControllerTest extends TestCase
     public function test_store_expense_fails_when_amount_exceeds_balance(): void
     {
         $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
-        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 10]);
+        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 10, 'status' => CardStatusEnum::Ativo]);
 
         $expenseData = ['card_id' => $card->id, 'amount' => 20, 'description' => 'teste de despesa'];
 
@@ -121,6 +121,38 @@ class ExpenseControllerTest extends TestCase
         $response->assertStatus(400)
             ->assertJsonFragment([
                 'error' => 'Saldo insuficiente.',
+            ]);
+    }
+
+    public function test_store_expense_fails_when_card_is_blocked(): void
+    {
+        $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
+        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 10, 'status' => CardStatusEnum::Bloqueado]);
+
+        $expenseData = ['card_id' => $card->id, 'amount' => 20, 'description' => 'teste de despesa'];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/expenses', $expenseData);
+
+        $response->assertStatus(400)
+            ->assertJsonFragment([
+                'error' => 'O cartão não está ativo e não pode ser utilizado para novas transações.',
+            ]);
+    }
+
+    public function test_store_expense_fails_when_card_is_canceled(): void
+    {
+        $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
+        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 10, 'status' => CardStatusEnum::Cancelado]);
+
+        $expenseData = ['card_id' => $card->id, 'amount' => 20, 'description' => 'teste de despesa'];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/expenses', $expenseData);
+
+        $response->assertStatus(400)
+            ->assertJsonFragment([
+                'error' => 'O cartão não está ativo e não pode ser utilizado para novas transações.',
             ]);
     }
 
@@ -143,7 +175,7 @@ class ExpenseControllerTest extends TestCase
 
         $user = User::factory()->create();
         $admin = User::factory()->create(['type' => UserTypeEnum::Admin]);
-        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 100]);
+        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 100, 'status' => CardStatusEnum::Ativo]);
 
         $expenseData = ['card_id' => $card->id, 'amount' => 20, 'description' => 'teste de despesa'];
 
@@ -158,7 +190,7 @@ class ExpenseControllerTest extends TestCase
         Mail::fake();
 
         $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
-        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 100]);
+        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 100, 'status' => CardStatusEnum::Ativo]);
 
         $expenseData = ['card_id' => $card->id, 'amount' => 20, 'description' => 'teste de despesa'];
 
@@ -174,7 +206,7 @@ class ExpenseControllerTest extends TestCase
 
         $admin = User::factory()->create(['type' => UserTypeEnum::Admin]);
         $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
-        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 100]);
+        $card = Card::factory()->create(['user_id' => $user->id,'number' => 1234567812345670, 'balance' => 100, 'status' => CardStatusEnum::Ativo]);
 
         $expenseData = ['card_id' => $card->id, 'amount' => 20, 'description' => 'teste de despesa'];
 

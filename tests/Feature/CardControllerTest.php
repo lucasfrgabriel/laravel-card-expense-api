@@ -151,11 +151,11 @@ class CardControllerTest extends TestCase
         $this->assertForbidden($response);
     }
 
-    public function test_deposit_invalid_amount(): void
+    public function test_deposit_fails_with_invalid_amount(): void
     {
         $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
 
-        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id]);
+        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id, 'status' => CardStatusEnum::Ativo]);
         $newDeposit = ['amount' => -10];
 
         $response = $this->actingAs($user)
@@ -166,12 +166,44 @@ class CardControllerTest extends TestCase
             ->assertJsonCount(1, 'errors');
     }
 
+    public function test_deposit_fails_when_card_is_blocked(): void
+    {
+        $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
+
+        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id, 'status' => CardStatusEnum::Bloqueado]);
+        $newDeposit = ['amount' => 10];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/cards/' . $card->id . '/deposit', $newDeposit);
+
+        $response->assertStatus(400)
+            ->assertJsonFragment([
+                'error' => 'O cartão não está ativo e não pode ser utilizado para novas transações.',
+            ]);
+    }
+
+    public function test_deposit_fails_when_card_is_canceled(): void
+    {
+        $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
+
+        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id, 'status' => CardStatusEnum::Cancelado]);
+        $newDeposit = ['amount' => 10];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/cards/' . $card->id . '/deposit', $newDeposit);
+
+        $response->assertStatus(400)
+            ->assertJsonFragment([
+                'error' => 'O cartão não está ativo e não pode ser utilizado para novas transações.',
+            ]);
+    }
+
     public function test_admin_can_deposit_to_any_user_card(): void
     {
         $user = User::factory()->create();
         $admin = User::factory()->create(['type' => UserTypeEnum::Admin]);
 
-        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id]);
+        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id, 'status' => CardStatusEnum::Ativo]);
         $newDeposit = ['amount' => 100];
 
         $newBalance = $newDeposit['amount'] + $card->balance;
@@ -187,11 +219,11 @@ class CardControllerTest extends TestCase
     {
         $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
 
-        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id]);
+        $card = Card::factory()->create(['number' => '1234567812345670', 'user_id' => $user->id, 'status' => CardStatusEnum::Ativo]);
         $newDeposit = ['amount' => 100];
 
         $newBalance = $newDeposit['amount'] + $card->balance;
-        $expectedData = ['number' => $card->number, 'user_id' => $card->user_id, 'balance' => $newBalance, 'status' => $card->status, 'brand' => $card->brand];
+        $expectedData = ['number' => $card->number, 'user_id' => $card->user_id, 'balance' => $newBalance, 'status' => $card->status, 'brand' => $card->brand, 'status' => CardStatusEnum::Ativo];
 
         $response = $this->actingAs($user)
             ->postJson('/api/cards/' . $card->id . '/deposit', $newDeposit);

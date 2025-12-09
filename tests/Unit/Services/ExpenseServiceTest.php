@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\CardStatusEnum;
 use App\Exceptions\InsufficientBalanceException;
 use App\Models\Card;
 use App\Models\Expense;
@@ -53,6 +54,7 @@ class ExpenseServiceTest extends TestCase
 
         $mockCard->id = 1;
         $mockCard->balance = 100;
+        $mockCard->status = CardStatusEnum::Ativo;
 
         $expenseData = ['card_id' => $mockCard->id, 'amount' => 90, 'description' => 'test valid expense'];
         $expectedExpense = new Expense($expenseData);
@@ -86,6 +88,7 @@ class ExpenseServiceTest extends TestCase
 
         $mockCard->id = 1;
         $mockCard->balance = 100;
+        $mockCard->status = CardStatusEnum::Ativo;
 
         $expenseData = ['card_id' => $mockCard->id, 'amount' => 200, 'description' => 'test valid expense'];
         $expectedExpense = new Expense($expenseData);

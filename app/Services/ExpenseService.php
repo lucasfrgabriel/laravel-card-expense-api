@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\CardStatusEnum;
+use App\Exceptions\InactiveCardException;
 use App\Exceptions\InsufficientBalanceException;
 use App\Models\Card;
 use App\Models\Expense;
@@ -19,12 +21,17 @@ class ExpenseService
     }
 
     /**
-     * @throws Exception
+     * @throws InactiveCardException
+     * @throws InsufficientBalanceException
      */
     public function store(array $data): Expense
     {
         $card = $this->cardRepository->find($data['card_id']);
         $amount = $data['amount'];
+
+        if($card->status != CardStatusEnum::Ativo){
+            throw new InactiveCardException('O cartão não está ativo e não pode ser utilizado para novas transações.');
+        }
 
         if(!$this->hasBalance($card, $amount)) {
             throw new InsufficientBalanceException('Saldo insuficiente.');

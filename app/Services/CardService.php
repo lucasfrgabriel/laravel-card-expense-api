@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CardStatusEnum;
+use App\Exceptions\InactiveCardException;
 use App\Exceptions\InvalidAmountException;
 use App\Exceptions\InvalidCardNumberException;
 use App\Models\Card;
@@ -29,11 +30,17 @@ class CardService
         return $this->cardRepository->create($data);
     }
 
+
     /**
+     * @throws InactiveCardException
      * @throws InvalidAmountException
      */
     public function deposit (Card $card, float $amount): Card
     {
+        if($card->status != CardStatusEnum::Ativo){
+            throw new InactiveCardException('O cartão não está ativo e não pode ser utilizado para novas transações.');
+        }
+
         if($amount <= 0){
             throw new InvalidAmountException('O valor de depósito não pode ser menor ou igual a 0');
         }

@@ -26,6 +26,7 @@ class CardServiceTest extends TestCase
     {
         $card  = new Card();
         $card->balance = 0;
+        $card->status = CardStatusEnum::Ativo;
 
         $this->expectException(InvalidAmountException::class);
         $this->expectExceptionMessage('O valor de depósito não pode ser menor ou igual a 0');
@@ -43,6 +44,7 @@ class CardServiceTest extends TestCase
             ->onlyMethods(['save'])->getMock();
 
         $mockCard->balance = 0;
+        $mockCard->status = CardStatusEnum::Ativo;
 
         $mockCard->expects($this->once())
             ->method('save')
@@ -68,7 +70,7 @@ class CardServiceTest extends TestCase
         $cardNumber = "1234567812345670";
         $data = ['number' => $cardNumber];
 
-        $expectedCard = new Card(['number' => '1234567812345670']);
+        $expectedCard = new Card(['number' => '1234567812345670', 'status' => CardStatusEnum::Ativo]);
 
         $this->mockCardRepository->expects($this->once())
             ->method('create')
