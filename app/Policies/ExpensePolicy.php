@@ -31,9 +31,13 @@ class ExpensePolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function createFor(User $user, User $cardOwner): bool
     {
-        return true;
+        return (
+            $user->type == UserTypeEnum::Admin
+            ||
+            $cardOwner->is($user)
+        );
     }
 
     /**

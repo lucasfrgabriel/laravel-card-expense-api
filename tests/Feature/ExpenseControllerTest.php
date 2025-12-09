@@ -200,6 +200,20 @@ class ExpenseControllerTest extends TestCase
         $this->assertCreated($response, $expenseData);
     }
 
+    public function test_comum_cannot_store_expense_for_other_user_card(): void
+    {
+        $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
+        $otherUser = User::factory()->create();
+        $card = Card::factory()->create(['user_id' => $otherUser->id,'number' => 1234567812345670, 'balance' => 100, 'status' => CardStatusEnum::Ativo]);
+
+        $expenseData = ['card_id' => $card->id, 'amount' => 20, 'description' => 'teste de despesa'];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/expenses', $expenseData);
+
+        $this->assertForbidden($response);
+    }
+
     public function test_store_expense_dispatches_email_event(): void
     {
         Mail::fake();

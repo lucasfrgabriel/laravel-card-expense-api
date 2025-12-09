@@ -9,6 +9,7 @@ use App\Http\Requests\CreateCardRequest;
 use App\Http\Requests\UpdateCardRequest;
 use App\Http\Resources\CardResource;
 use App\Models\Card;
+use App\Repositories\UserRepository;
 use App\Services\CardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,10 +18,12 @@ use Illuminate\Support\Facades\DB;
 class CardController extends Controller
 {
     protected CardService $cardService;
+    protected UserRepository $userRepository;
 
-    public function __construct(CardService $cardService)
+    public function __construct(CardService $cardService, UserRepository $userRepository)
     {
         $this->cardService = $cardService;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -39,7 +42,9 @@ class CardController extends Controller
      */
     public function store(CreateCardRequest $request)
     {
-        $this->authorize('create', Card::class);
+        $cardOwner = $this->userRepository->findUserById($request->user_id);
+        $this->authorize('createFor', [Card::class, $cardOwner]);
+
         DB::beginTransaction();
 
         try {

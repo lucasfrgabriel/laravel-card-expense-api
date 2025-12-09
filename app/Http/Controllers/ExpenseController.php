@@ -6,6 +6,7 @@ use App\Events\NewExpenseEvent;
 use App\Http\Requests\ExpenseRequest;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
+use App\Repositories\UserRepository;
 use App\Services\ExpenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +14,10 @@ use Illuminate\Support\Facades\DB;
 class ExpenseController extends Controller
 {
     protected ExpenseService $expenseService;
-    public function __construct(ExpenseService $expenseService){
+    protected UserRepository $userRepository;
+    public function __construct(ExpenseService $expenseService, UserRepository $userRepository){
         $this->expenseService = $expenseService;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -33,7 +36,9 @@ class ExpenseController extends Controller
      */
     public function store(ExpenseRequest $request): JsonResponse|ExpenseResource
     {
-        $this->authorize('create', Expense::class);
+        $cardOwner = $this->userRepository->findUserByCardId($request->card_id);
+        $this->authorize('createFor', [Expense::class, $cardOwner]);
+
         DB::beginTransaction();
 
         try{

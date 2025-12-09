@@ -76,7 +76,6 @@ class CardControllerTest extends TestCase
         $this->assertCreated($response, $cardData);
     }
 
-    /*
     public function test_comum_cannot_add_card_to_other_user(): void
     {
         $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
@@ -89,7 +88,6 @@ class CardControllerTest extends TestCase
 
         $this->assertForbidden($response);
     }
-    */
 
     public function test_update_invalid_card_status(): void
     {
