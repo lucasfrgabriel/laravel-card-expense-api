@@ -8,9 +8,11 @@ use App\Enums\UserTypeEnum;
 use App\Models\Card;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
+use function Psy\debug;
 
 class CardControllerTest extends TestCase
 {
@@ -45,7 +47,7 @@ class CardControllerTest extends TestCase
         $response = $this->actingAs($admin)
             ->postJson('/api/cards', $cardData);
 
-        $response->assertStatus(500)
+        $response->assertStatus(400)
             ->assertJsonFragment([
                 'error' => 'O número do cartão não é válido.',
             ]);
@@ -174,6 +176,8 @@ class CardControllerTest extends TestCase
         $response = $this->actingAs($user)
             ->postJson('/api/cards/' . $card->id . '/deposit', $newDeposit);
 
+        Log::debug($response->getContent());
+
         $response->assertStatus(400)
             ->assertJsonFragment([
                 'error' => 'O cartão não está ativo e não pode ser utilizado para novas transações.',
@@ -221,7 +225,7 @@ class CardControllerTest extends TestCase
         $newDeposit = ['amount' => 100];
 
         $newBalance = $newDeposit['amount'] + $card->balance;
-        $expectedData = ['number' => $card->number, 'user_id' => $card->user_id, 'balance' => $newBalance, 'status' => $card->status, 'brand' => $card->brand, 'status' => CardStatusEnum::Ativo];
+        $expectedData = ['number' => $card->number, 'user_id' => $card->user_id, 'balance' => $newBalance, 'status' => $card->status, 'brand' => $card->brand];
 
         $response = $this->actingAs($user)
             ->postJson('/api/cards/' . $card->id . '/deposit', $newDeposit);
@@ -417,7 +421,7 @@ class CardControllerTest extends TestCase
     {
         return $response->assertStatus(403)
             ->assertJsonFragment([
-                'message' => 'This action is unauthorized.',
+                'error' => 'This action is unauthorized.',
             ]);
     }
 

@@ -3,11 +3,14 @@
 namespace App\Services;
 
 use App\Enums\CardStatusEnum;
+use App\Exceptions\CardNotCreatedException;
+use App\Exceptions\DepositFailedException;
 use App\Exceptions\InactiveCardException;
 use App\Exceptions\InvalidAmountException;
 use App\Exceptions\InvalidCardNumberException;
 use App\Models\Card;
 use App\Repositories\CardRepository;
+use Illuminate\Support\Facades\DB;
 
 class CardService
 {
@@ -16,45 +19,70 @@ class CardService
         $this->cardRepository = $cardRepository;
     }
 
-    /**
-     * @throws InvalidCardNumberException
-     */
     public function store(array $data): Card
     {
         $cardNumber = $data['number'];
 
-        if(!Utils::luhnCheck($cardNumber)) {
-            throw new InvalidCardNumberException('O número do cartão não é válido.');
+        if(!Utils::isCardValid($cardNumber)) {
+            throw new InvalidCardNumberException();
         }
 
-        return $this->cardRepository->create($data);
+        try {
+            DB::beginTransaction();
+
+            $newCard = $this->cardRepository->create($data);
+
+            DB::commit();
+
+            return $newCard->load('expenses');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw new CardNotCreatedException($e);
+        }
     }
 
-
-    /**
-     * @throws InactiveCardException
-     * @throws InvalidAmountException
-     */
     public function deposit (Card $card, float $amount): Card
     {
         if($card->status != CardStatusEnum::Ativo){
-            throw new InactiveCardException('O cartão não está ativo e não pode ser utilizado para novas transações.');
+            throw new InactiveCardException();
         }
 
         if($amount <= 0){
-            throw new InvalidAmountException('O valor de depósito não pode ser menor ou igual a 0');
+            throw new InvalidAmountException();
         }
 
-        $card->balance += $amount;
-        $card->save();
+        try{
+            DB::beginTransaction();
 
-        return $card;
+            $card->balance += $amount;
+            $card->save();
+
+            DB::commit();
+
+            return $card->load('expenses');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw new DepositFailedException($e);
+        }
     }
 
-    public function changeStatus(Card $card, CardStatusEnum $status): Card
+    public function changeStatus(Card $card, array $data): Card
     {
-        $card->status  = $status;
-        $card->save();
+        $newStatus = CardStatusEnum::from($data['status']);
+        try{
+            DB::beginTransaction();
+
+            $card->status = $newStatus;
+            $card->save();
+
+            DB::commit();
+
+            return $card->load('expenses');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw new CardNotUpdatedException($e);
+        }
+
 
         return $card;
     }
@@ -67,8 +95,8 @@ class CardService
         if($data['number']){
 
             $cardNumber = $data['number'];
-            if(!Utils::luhnCheck($cardNumber)) {
-                throw new InvalidCardNumberException('O número do cartão não é válido.');
+            if(!Utils::isCardValid($cardNumber)) {
+                throw new InvalidCardNumberException();
             }
         }
 

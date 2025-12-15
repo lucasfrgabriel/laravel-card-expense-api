@@ -12,8 +12,11 @@ class UserRepository
         return User::create($data);
     }
 
-    public function findUserById(int $id): ?User
+    public function findUserById(?int $id): ?User
     {
+        if (is_null($id)) {
+            return null;
+        }
         return User::find($id);
     }
 

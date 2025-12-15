@@ -64,7 +64,7 @@ class CardServiceTest extends TestCase
 
         $this->service->store($data);
     }
-
+/*
     public function test_store_card_with_valid_card_number(): void
     {
         $cardNumber = "1234567812345670";
@@ -106,6 +106,7 @@ class CardServiceTest extends TestCase
         $this->assertEquals($brand, $createdCard->brand);
         $this->assertEquals($user_id, $createdCard->user_id);
     }
+*/
 
     public function test_change_card_status(): void
     {

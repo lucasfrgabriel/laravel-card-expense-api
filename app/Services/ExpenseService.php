@@ -30,11 +30,11 @@ class ExpenseService
         $amount = $data['amount'];
 
         if($card->status != CardStatusEnum::Ativo){
-            throw new InactiveCardException('O cartão não está ativo e não pode ser utilizado para novas transações.');
+            throw new InactiveCardException();
         }
 
         if(!$this->hasBalance($card, $amount)) {
-            throw new InsufficientBalanceException('Saldo insuficiente.');
+            throw new InsufficientBalanceException();
         }
 
         $expense = $this->expenseRepository->create($data);

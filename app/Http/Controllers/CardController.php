@@ -12,19 +12,11 @@ use App\Models\Card;
 use App\Repositories\UserRepository;
 use App\Services\CardService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CardController extends Controller
 {
-    protected CardService $cardService;
-    protected UserRepository $userRepository;
-
-    public function __construct(CardService $cardService, UserRepository $userRepository)
-    {
-        $this->cardService = $cardService;
-        $this->userRepository = $userRepository;
-    }
+    public function __construct(protected CardService $cardService, protected UserRepository $userRepository){}
 
     /**
      * Display a listing of the resource.
@@ -42,25 +34,8 @@ class CardController extends Controller
      */
     public function store(CreateCardRequest $request)
     {
-        $cardOwner = $this->userRepository->findUserById($request->user_id);
-        $this->authorize('createFor', [Card::class, $cardOwner]);
-
-        DB::beginTransaction();
-
-        try {
-            $validated = $request->validated();
-
-            $data = array_merge($validated, ['expenses' => []], ['balance' => 0]);
-
-            $card = $this->cardService->store($data);
-            $card->load('expenses');
-
-            DB::commit();
-            return new CardResource($card);
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return response()->json(['error' => $exception->getMessage()], 500);
-        }
+        $card = $this->cardService->store($request->returnData());
+        return new CardResource($card);
     }
 
     /**
@@ -69,24 +44,9 @@ class CardController extends Controller
      */
     public function deposit(CardDepositRequest $request, Card $card): JsonResponse|CardResource
     {
-        $this->authorize('deposit', $card);
-        DB::beginTransaction();
-
-        try{
-            $validated = $request->validated();
-
-            $card = $this->cardService->deposit($card, $validated['amount']);
-            $card->load('expenses');
-
-            DB::commit();
-            return new CardResource($card);
-        } catch (\Exception $e){
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Error processing deposit.',
-                'error' => $e->getMessage()
-            ],400);
-        }
+        $request = $request->returnData();
+        $card = $this->cardService->deposit($card, $request['amount']);
+        return new CardResource($card);
     }
 
     /**
@@ -94,25 +54,10 @@ class CardController extends Controller
      */
     public function changeStatus(CardStatusRequest $request, Card $card): JsonResponse|CardResource
     {
-        $this->authorize('changeStatus', $card);
-        DB::beginTransaction();
+        $request = $request->returnData();
+        $card = $this->cardService->changeStatus($card, $request);
+        return new CardResource($card);
 
-        try{
-            $validated = $request->validated();
-            $newStatus = CardStatusEnum::from($validated['status']);
-
-            $card = $this->cardService->changeStatus($card, $newStatus);
-            $card->load('expenses');
-
-            DB::commit();
-            return new CardResource($card);
-        } catch (\Exception $e){
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Error processing change status.',
-                'error' => $e->getMessage()
-            ], 400);
-        }
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\CardStatusEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
 
 class CardStatusRequest extends FormRequest
@@ -13,7 +14,8 @@ class CardStatusRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $card = $this->route('card');
+        return Gate::forUser($this->user())->allows('changeStatus', $card);
     }
 
     /**
@@ -26,5 +28,10 @@ class CardStatusRequest extends FormRequest
         return [
             'status' => ['required', new Enum(CardStatusEnum::class)],
         ];
+    }
+
+    public function returnData(): array
+    {
+        return $this->validated();
     }
 }

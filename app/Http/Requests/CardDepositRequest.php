@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class CardDepositRequest extends FormRequest
 {
@@ -11,7 +12,8 @@ class CardDepositRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $card = $this->route('card');
+        return Gate::forUser($this->user())->allows('deposit', $card);
     }
 
     /**
@@ -24,5 +26,10 @@ class CardDepositRequest extends FormRequest
         return [
             'amount' => 'required|numeric|min:0.01',
         ];
+    }
+
+    public function returnData(): array
+    {
+        return $this->validated();
     }
 }

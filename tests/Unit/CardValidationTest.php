@@ -10,14 +10,14 @@ class CardValidationTest extends TestCase
     public function test_valid_card_number(): void
     {
         $cardNumber = "1234567812345670";
-        $result = Utils::luhnCheck($cardNumber);
+        $result = Utils::isCardValid($cardNumber);
         $this->assertTrue($result);
     }
 
     public function test_invalid_card_number(): void
     {
         $cardNumber = "1234567812345678";
-        $result = Utils::luhnCheck($cardNumber);
+        $result = Utils::isCardValid($cardNumber);
         $this->assertFalse($result);
     }
 }
