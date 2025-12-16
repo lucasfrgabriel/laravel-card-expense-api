@@ -4,12 +4,12 @@ namespace App\Services;
 
 use App\Enums\CardBrandEnum;
 use App\Enums\CardStatusEnum;
-use App\Exceptions\CardNotCreatedException;
-use App\Exceptions\CardNotUpdatedException;
+use App\Exceptions\Cards\CardNotCreatedException;
+use App\Exceptions\Cards\CardNotUpdatedException;
+use App\Exceptions\Cards\InactiveCardException;
+use App\Exceptions\Cards\InvalidCardNumberException;
 use App\Exceptions\DepositFailedException;
-use App\Exceptions\InactiveCardException;
 use App\Exceptions\InvalidAmountException;
-use App\Exceptions\InvalidCardNumberException;
 use App\Models\Card;
 use App\Repositories\CardRepository;
 use Illuminate\Support\Facades\DB;
@@ -89,6 +89,7 @@ class CardService
     public function update(Card $card, string|null $number, CardStatusEnum|null $status, CardBrandEnum|null $brand): Card
     {
         $data = [];
+
         if($number){
             if(!Utils::isCardValid($number)) {
                 throw new InvalidCardNumberException();

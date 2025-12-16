@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exceptions;
+namespace App\Exceptions\Cards;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;
 

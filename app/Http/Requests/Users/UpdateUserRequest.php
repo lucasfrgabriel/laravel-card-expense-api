@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Users;
 
 use App\Enums\UserTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
@@ -14,7 +15,8 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->route('user');
+        return Gate::forUser($this->user())->allows('update', $user);
     }
 
     /**
@@ -38,5 +40,31 @@ class UpdateUserRequest extends FormRequest
             'password' => 'sometimes|string|min:8',
             'type' => ['sometimes', new Enum(UserTypeEnum::class)],
         ];
+    }
+
+    public function getName(): string|null
+    {
+        return $this->input('name');
+    }
+
+    public function getEmail(): string|null
+    {
+        return $this->input('email');
+    }
+
+    public function getPassword(): string|null
+    {
+        return $this->input('password');
+    }
+
+    public function getType(): UserTypeEnum|null
+    {
+        $userType = $this->input('type');
+
+        if($userType === null){
+            return null;
+        }
+
+        return UserTypeEnum::from($userType);
     }
 }

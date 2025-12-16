@@ -3,13 +3,12 @@
 namespace App\Services;
 
 use App\Enums\CardStatusEnum;
-use App\Exceptions\InactiveCardException;
+use App\Exceptions\Cards\InactiveCardException;
 use App\Exceptions\InsufficientBalanceException;
 use App\Models\Card;
 use App\Models\Expense;
 use App\Repositories\CardRepository;
 use App\Repositories\ExpenseRepository;
-use Exception;
 
 class ExpenseService
 {

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Exceptions;
+namespace App\Exceptions\Cards;
 
-use Exception;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
-class CardNotUpdatedException extends Exception
+class CardNotUpdatedException extends HttpException
 {
     public function __construct(Throwable $previous = null)
     {

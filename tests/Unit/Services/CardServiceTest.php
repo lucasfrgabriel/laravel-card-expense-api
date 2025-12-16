@@ -4,8 +4,8 @@ namespace Tests\Unit\Services;
 
 use App\Enums\CardBrandEnum;
 use App\Enums\CardStatusEnum;
+use App\Exceptions\Cards\InvalidCardNumberException;
 use App\Exceptions\InvalidAmountException;
-use App\Exceptions\InvalidCardNumberException;
 use App\Models\Card;
 use App\Repositories\CardRepository;
 use App\Services\CardService;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Users;
 
 use App\Enums\UserTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,5 +29,25 @@ class CreateUserRequest extends FormRequest
             'password' => 'required|string|min:8',
             'type' => ['required', new Enum(UserTypeEnum::class)],
         ];
+    }
+
+    public function getName(): string
+    {
+        return $this->input('name');
+    }
+
+    public function getEmail(): string
+    {
+        return $this->input('email');
+    }
+
+    public function getPassword(): string
+    {
+        return $this->input('password');
+    }
+
+    public function getType(): UserTypeEnum
+    {
+        return UserTypeEnum::from($this->input('type'));
     }
 }

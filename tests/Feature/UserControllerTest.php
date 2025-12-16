@@ -86,7 +86,7 @@ class UserControllerTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonFragment([
-                'message' => 'This action is unauthorized.',
+                'error' => 'This action is unauthorized.',
             ]);
     }
 
@@ -149,7 +149,7 @@ class UserControllerTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonFragment([
-                'message' => 'This action is unauthorized.',
+                'error' => 'This action is unauthorized.',
             ]);
     }
 
@@ -187,7 +187,7 @@ class UserControllerTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonFragment([
-                'message' => 'This action is unauthorized.',
+                'error' => 'This action is unauthorized.',
             ]);
     }
 
@@ -259,7 +259,7 @@ class UserControllerTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonFragment([
-                'message' => 'This action is unauthorized.',
+                'error' => 'This action is unauthorized.',
             ]);
     }
 

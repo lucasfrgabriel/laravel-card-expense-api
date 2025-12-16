@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateUserRequest;
-use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\Users\CreateUserRequest;
+use App\Http\Requests\Users\DeleteUserRequest;
+use App\Http\Requests\Users\UpdateUserRequest;
+use App\Http\Requests\Users\ViewAllUsersRequest;
+use App\Http\Requests\Users\ViewSpecifiedUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\UserService;
-use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -20,11 +22,11 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ViewAllUsersRequest $request)
     {
-        $this->authorize('viewAny', User::class);
-        $users = User::with('cards')->get();
-        return UserResource::collection($users);
+        $paginate = $request->getPaginate();
+        $users = User::with('cards')->paginate($paginate);
+        return UserResource::collection($users->getCollection());
     }
 
     /**
@@ -33,30 +35,16 @@ class UserController extends Controller
      */
     public function store(CreateUserRequest $request)
     {
-        DB::beginTransaction();
-
-        try {
-            $validated = $request->validated();
-
-            $user = $this->userService->store($validated);
-            $user->load('cards');
-
-            DB::commit();
-            return new UserResource($user);
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return response()->json(['error' => $exception->getMessage()], 500);
-        }
+        $user = $this->userService->store($request->getName(), $request->getEmail(), $request->getPassword(), $request->getType());
+        return new UserResource($user);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show(ViewSpecifiedUserRequest $request, User $user)
     {
-        $this->authorize('view', $user);
-        $user->load('cards');
-        return new UserResource($user);
+        return new UserResource($user->load('cards'));
     }
 
     /**
@@ -65,31 +53,15 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user)
     {
-        $this->authorize('update', $user);
-        DB::beginTransaction();
-
-        try{
-            $validated = $request->validated();
-            $this->userService->update($user, $validated);
-            $user->load('cards');
-
-            DB::commit();
-            return new UserResource($user);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Error processing update.',
-                'errors' => $e->getMessage()
-            ], 400);
-        }
+        $this->userService->update($user, $request->getName(), $request->getEmail(), $request->getPassword(), $request->getType());
+        return new UserResource($user);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(DeleteUserRequest $request, User $user)
     {
-        $this->authorize('delete', $user);
         $user->delete();
         return response()->noContent();
     }
