@@ -8,7 +8,6 @@ use App\Enums\UserTypeEnum;
 use App\Models\Card;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -175,8 +174,6 @@ class CardControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->postJson('/api/cards/' . $card->id . '/deposit', $newDeposit);
-
-        Log::debug($response->getContent());
 
         $response->assertStatus(400)
             ->assertJsonFragment([

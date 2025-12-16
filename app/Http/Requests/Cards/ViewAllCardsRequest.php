@@ -1,21 +1,19 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Cards;
 
-use App\Enums\CardStatusEnum;
+use App\Models\Card;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rules\Enum;
 
-class CardStatusRequest extends FormRequest
+class ViewAllCardsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        $card = $this->route('card');
-        return Gate::forUser($this->user())->allows('changeStatus', $card);
+        return Gate::forUser($this->user())->allows('viewAny', Card::class);
     }
 
     /**
@@ -26,12 +24,12 @@ class CardStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', new Enum(CardStatusEnum::class)],
+            'paginate' => 'sometimes|nullable|integer|min:1',
         ];
     }
 
-    public function returnData(): array
+    public function getPaginate(): int
     {
-        return $this->validated();
+        return $this->query('paginate', 2);
     }
 }

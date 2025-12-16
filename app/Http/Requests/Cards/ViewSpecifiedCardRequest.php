@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Cards;
 
+use App\Models\Card;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
-class CardDepositRequest extends FormRequest
+class ViewSpecifiedCardRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -13,7 +14,7 @@ class CardDepositRequest extends FormRequest
     public function authorize(): bool
     {
         $card = $this->route('card');
-        return Gate::forUser($this->user())->allows('deposit', $card);
+        return Gate::forUser($this->user())->allows('view', $card);
     }
 
     /**
@@ -23,13 +24,6 @@ class CardDepositRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'amount' => 'required|numeric|min:0.01',
-        ];
-    }
-
-    public function returnData(): array
-    {
-        return $this->validated();
+        return [];
     }
 }

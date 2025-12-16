@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Http\Requests\Cards;
+
+use App\Enums\CardStatusEnum;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rules\Enum;
+
+class CardStatusRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        $card = $this->route('card');
+        return Gate::forUser($this->user())->allows('changeStatus', $card);
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'status' => ['required', new Enum(CardStatusEnum::class)],
+        ];
+    }
+
+    public function getStatus(): CardStatusEnum{
+        return CardStatusEnum::from($this->input('status'));
+    }
+}

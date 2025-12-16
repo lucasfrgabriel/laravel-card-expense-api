@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Cards;
 
 use App\Enums\CardBrandEnum;
 use App\Enums\CardStatusEnum;
@@ -42,9 +42,23 @@ class CreateCardRequest extends FormRequest
         ];
     }
 
-    public function returnData(): array
+    public function getNumber(): string
     {
-        $validated = $this->validated();
-        return array_merge($validated, ['expenses' => []], ['balance' => 0]);
+        return $this->input('number');
+    }
+
+    public function getStatus(): CardStatusEnum
+    {
+        return CardStatusEnum::from($this->input('status'));
+    }
+
+    public function getBrand(): CardBrandEnum
+    {
+        return CardBrandEnum::from($this->input('brand'));
+    }
+
+    public function getUserId(): int
+    {
+        return $this->input('user_id');
     }
 }

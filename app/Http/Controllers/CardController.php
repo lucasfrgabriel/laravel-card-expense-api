@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\CardStatusEnum;
-use App\Http\Requests\CardDepositRequest;
-use App\Http\Requests\CardStatusRequest;
-use App\Http\Requests\CreateCardRequest;
-use App\Http\Requests\UpdateCardRequest;
+use App\Http\Requests\Cards\CardDepositRequest;
+use App\Http\Requests\Cards\CardStatusRequest;
+use App\Http\Requests\Cards\CreateCardRequest;
+use App\Http\Requests\Cards\DeleteCardRequest;
+use App\Http\Requests\Cards\UpdateCardRequest;
+use App\Http\Requests\Cards\ViewAllCardsRequest;
+use App\Http\Requests\Cards\ViewSpecifiedCardRequest;
 use App\Http\Resources\CardResource;
 use App\Models\Card;
 use App\Repositories\UserRepository;
 use App\Services\CardService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class CardController extends Controller
 {
@@ -21,11 +22,11 @@ class CardController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ViewAllCardsRequest $request)
     {
-        $this->authorize('viewAny', Card::class);
-        $cards = Card::with('expenses')->get();
-        return CardResource::collection($cards);
+        $paginate = $request->getPaginate();
+        $cards = Card::with('expenses')->paginate($paginate);
+        return CardResource::collection($cards->getCollection());
     }
 
     /**
@@ -34,7 +35,7 @@ class CardController extends Controller
      */
     public function store(CreateCardRequest $request)
     {
-        $card = $this->cardService->store($request->returnData());
+        $card = $this->cardService->store($request->getNumber(), $request->getStatus(), $request->getBrand(), $request->getUserId());
         return new CardResource($card);
     }
 
@@ -44,8 +45,7 @@ class CardController extends Controller
      */
     public function deposit(CardDepositRequest $request, Card $card): JsonResponse|CardResource
     {
-        $request = $request->returnData();
-        $card = $this->cardService->deposit($card, $request['amount']);
+        $card = $this->cardService->deposit($card, $request->getAmount());
         return new CardResource($card);
     }
 
@@ -54,20 +54,16 @@ class CardController extends Controller
      */
     public function changeStatus(CardStatusRequest $request, Card $card): JsonResponse|CardResource
     {
-        $request = $request->returnData();
-        $card = $this->cardService->changeStatus($card, $request);
+        $card = $this->cardService->changeStatus($card, $request->getStatus());
         return new CardResource($card);
-
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Card $card)
+    public function show(ViewSpecifiedCardRequest $request, Card $card)
     {
-        $this->authorize('view', $card);
-        $card->load('expenses');
-        return new CardResource($card);
+        return new CardResource($card->load('expenses'));
     }
 
 
@@ -77,32 +73,15 @@ class CardController extends Controller
      */
     public function update(UpdateCardRequest $request, Card $card)
     {
-        $this->authorize('update', $card);
-        DB::beginTransaction();
-
-        try{
-            $validated = $request->validated();
-
-            $card = $this->cardService->update($card, $validated);
-            $card->load('expenses');
-
-            DB::commit();
-            return new CardResource($card);
-        } catch (\Exception $e){
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Error processing update.',
-                'error' => $e->getMessage()
-            ], 400);
-        }
+        $card = $this->cardService->update($card, $request->getNumber(), $request->getStatus(), $request->getBrand());
+        return new CardResource($card);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Card $card)
+    public function destroy(DeleteCardRequest $request, Card $card)
     {
-        $this->authorize('delete', $card);
         $card->delete();
         return response()->noContent();
     }

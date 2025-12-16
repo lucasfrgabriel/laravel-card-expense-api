@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\CardBrandEnum;
 use App\Enums\CardStatusEnum;
 use App\Exceptions\CardNotCreatedException;
+use App\Exceptions\CardNotUpdatedException;
 use App\Exceptions\DepositFailedException;
 use App\Exceptions\InactiveCardException;
 use App\Exceptions\InvalidAmountException;
@@ -19,18 +21,16 @@ class CardService
         $this->cardRepository = $cardRepository;
     }
 
-    public function store(array $data): Card
+    public function store(string $number, CardStatusEnum $status, CardBrandEnum $brand, int $user_id): Card
     {
-        $cardNumber = $data['number'];
-
-        if(!Utils::isCardValid($cardNumber)) {
+        if(!Utils::isCardValid($number)) {
             throw new InvalidCardNumberException();
         }
 
         try {
             DB::beginTransaction();
 
-            $newCard = $this->cardRepository->create($data);
+            $newCard = $this->cardRepository->create($number, $status, $brand, $user_id);
 
             DB::commit();
 
@@ -66,9 +66,8 @@ class CardService
         }
     }
 
-    public function changeStatus(Card $card, array $data): Card
+    public function changeStatus(Card $card, CardStatusEnum $newStatus): Card
     {
-        $newStatus = CardStatusEnum::from($data['status']);
         try{
             DB::beginTransaction();
 
@@ -82,25 +81,38 @@ class CardService
             DB::rollBack();
             throw new CardNotUpdatedException($e);
         }
-
-
-        return $card;
     }
 
     /**
      * @throws \Exception
      */
-    public function update(Card $card, array $data): Card
+    public function update(Card $card, string|null $number, CardStatusEnum|null $status, CardBrandEnum|null $brand): Card
     {
-        if($data['number']){
-
-            $cardNumber = $data['number'];
-            if(!Utils::isCardValid($cardNumber)) {
+        $data = [];
+        if($number){
+            if(!Utils::isCardValid($number)) {
                 throw new InvalidCardNumberException();
             }
+            $data['number'] = $number;
+        }
+        if($status){
+            $data['status'] = $status;
+        }
+        if($brand){
+            $data['brand'] = $brand;
         }
 
-        $card->update($data);
-        return $card;
+        try{
+            DB::beginTransaction();
+
+            $card->update($data);
+
+            DB::commit();
+
+            return $card->load('expenses');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw new CardNotUpdatedException($e);
+        }
     }
 }
