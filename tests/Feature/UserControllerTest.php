@@ -6,6 +6,7 @@ use App\Enums\UserTypeEnum;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class UserControllerTest extends TestCase
@@ -20,19 +21,9 @@ class UserControllerTest extends TestCase
 
         $response
             ->assertStatus(201)
-            ->assertJsonStructure([
-                'id',
-                'name',
-                'email',
-                'type',
-                'cards',
-            ])
+            ->assertJsonStructure($this->userJsonStructure())
             ->assertJson(fn (AssertableJson $json) =>
-            $json->where('id', 1)
-                ->where('name', $userData['name'])
-                ->where('email', $userData['email'])
-                ->where('type', $userData['type'])
-                ->where('cards', [])
+            $this->assertUserValues($json, $userData)
             );
     }
 
@@ -65,13 +56,7 @@ class UserControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonCount(3)
             ->assertJsonStructure([
-                '*' => [
-                    'id',
-                    'name',
-                    'email',
-                    'type',
-                    'cards',
-                ]
+                '*' => $this->userJsonStructure()
             ]);
     }
 
@@ -84,10 +69,7 @@ class UserControllerTest extends TestCase
             ->withSession(['banned' => false])
             ->getJson('/api/users');
 
-        $response->assertStatus(403)
-            ->assertJsonFragment([
-                'error' => 'This action is unauthorized.',
-            ]);
+        $this->assertForbidden($response);
     }
 
     public function test_admin_type_can_view_any_user(): void
@@ -97,45 +79,22 @@ class UserControllerTest extends TestCase
             ->withSession(['banned' => false])
             ->getJson('/api/users/' . $user->id);
 
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'id',
-                'name',
-                'email',
-                'type',
-                'cards',
-            ])
-            ->assertJson(fn (AssertableJson $json) =>
-            $json->where('id', $user->id)
-                ->where('name', $user->name)
-                ->where('email', $user->email)
-                ->where('type', $user->type)
-                ->where('cards', [])
-            );
+        $expectedData = ['user_id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'type' => $user->type];
+
+        $this->assertOk($response, $expectedData);
     }
 
     public function test_comum_type_can_view_own_user(): void
     {
         $user = User::factory()->create(['type' => UserTypeEnum::Comum]);
+
+        $expectedData = ['user_id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'type' => $user->type];
+
         $response = $this->actingAs($user)
             ->withSession(['banned' => false])
             ->getJson('/api/users/' . $user->id);
 
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'id',
-                'name',
-                'email',
-                'type',
-                'cards',
-            ])
-            ->assertJson(fn (AssertableJson $json) =>
-            $json->where('id', $user->id)
-                ->where('name', $user->name)
-                ->where('email', $user->email)
-                ->where('type', $user->type)
-                ->where('cards', [])
-            );
+        $this->assertOk($response, $expectedData);
     }
 
     public function test_comum_type_cannot_view_other_user(): void
@@ -147,10 +106,7 @@ class UserControllerTest extends TestCase
             ->withSession(['banned' => false])
             ->getJson('/api/users/' . $otherUser->id);
 
-        $response->assertStatus(403)
-            ->assertJsonFragment([
-                'error' => 'This action is unauthorized.',
-            ]);
+        $this->assertForbidden($response);
     }
 
     public function test_admin_type_can_delete_any_user(): void
@@ -185,10 +141,7 @@ class UserControllerTest extends TestCase
             ->withSession(['banned' => false])
             ->deleteJson('/api/users/' . $otherUser->id);
 
-        $response->assertStatus(403)
-            ->assertJsonFragment([
-                'error' => 'This action is unauthorized.',
-            ]);
+        $this->assertForbidden($response);
     }
 
     public function test_admin_type_can_update_any_user(): void
@@ -198,25 +151,13 @@ class UserControllerTest extends TestCase
 
         $userNewData = ['name' => 'Nome atualizado'];
 
+        $expectedData = ['user_id' => $user->id, 'name' => $userNewData['name'], 'email' => $user->email, 'type' => $user->type];
+
         $response = $this->actingAs($admin)
             ->withSession(['banned' => false])
             ->patchJson('/api/users/' . $user->id, $userNewData);
 
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'id',
-                'name',
-                'email',
-                'type',
-                'cards',
-            ])
-            ->assertJson(fn (AssertableJson $json) =>
-            $json->where('id', $user->id)
-                ->where('name', $userNewData['name'])
-                ->where('email', $user->email)
-                ->where('type', $user->type)
-                ->where('cards', [])
-            );
+        $this->assertOk($response, $expectedData);
     }
 
     public function test_comum_type_can_update_own_user(): void
@@ -225,25 +166,13 @@ class UserControllerTest extends TestCase
 
         $userNewData = ['name' => 'Nome atualizado'];
 
+        $expectedData = ['user_id' => $user->id, 'name' => $userNewData['name'], 'email' => $user->email, 'type' => $user->type];
+
         $response = $this->actingAs($user)
             ->withSession(['banned' => false])
             ->patchJson('/api/users/' . $user->id, $userNewData);
 
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'id',
-                'name',
-                'email',
-                'type',
-                'cards',
-            ])
-            ->assertJson(fn (AssertableJson $json) =>
-            $json->where('id', $user->id)
-                ->where('name', $userNewData['name'])
-                ->where('email', $user->email)
-                ->where('type', $user->type)
-                ->where('cards', [])
-            );
+        $this->assertOk($response, $expectedData);
     }
 
     public function test_comum_type_cannot_update_other_user(): void
@@ -257,7 +186,43 @@ class UserControllerTest extends TestCase
             ->withSession(['banned' => false])
             ->patchJson('/api/users/' . $otherUser->id, $userNewData);
 
-        $response->assertStatus(403)
+        $this->assertForbidden($response);
+    }
+
+    private function userJsonStructure(): array
+    {
+        return [
+            'id',
+            'name',
+            'email',
+            'type',
+            'cards',
+        ];
+    }
+
+    private function assertUserValues(AssertableJson $json, array $expectedData): AssertableJson
+    {
+        $json->where('id', $expectedData['user_id'] ?? 1)
+            ->where('name', $expectedData['name'])
+            ->where('email', $expectedData['email'])
+            ->where('type', $expectedData['type'])
+            ->where('cards', []);
+
+        return $json;
+    }
+
+    private function assertOk(TestResponse $response, array $expectedData): TestResponse
+    {
+        return $response->assertStatus(200)
+            ->assertJsonStructure($this->userJsonStructure())
+            ->assertJson(fn (AssertableJson $json) =>
+            $this->assertUserValues($json, $expectedData)
+            );
+    }
+
+    private function assertForbidden(TestResponse $response): TestResponse
+    {
+        return $response->assertStatus(403)
             ->assertJsonFragment([
                 'error' => 'This action is unauthorized.',
             ]);

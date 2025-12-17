@@ -18,8 +18,6 @@ class ExpenseControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    //index, store e destroy
-
     public function test_admin_can_view_all_expenses(): void
     {
         $users = User::factory(2)->create();
@@ -269,15 +267,6 @@ class ExpenseControllerTest extends TestCase
             ->assertJsonFragment([
                 'error' => 'This action is unauthorized.',
             ]);
-    }
-
-    private function assertOk(TestResponse $response, array $expectedData): TestResponse
-    {
-        return $response->assertStatus(200)
-            ->assertJsonStructure($this->expenseJsonStructure())
-            ->assertJson(fn (AssertableJson $json) =>
-            $this->assertExpenseValues($json, $expectedData)
-            );
     }
 
     private function assertCreated(TestResponse $response, array $expectedData): TestResponse
