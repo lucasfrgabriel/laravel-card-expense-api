@@ -20,7 +20,7 @@ class UserController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Lista todos os usuários (aceita paginação, por padrão exibe 10)
      */
     public function index(ViewAllUsersRequest $request)
     {
@@ -30,7 +30,7 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Cria um novo usuário
      * @throws \Throwable
      */
     public function store(CreateUserRequest $request)
@@ -40,7 +40,7 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Mostra um usuário específico
      */
     public function show(ViewSpecifiedUserRequest $request, User $user)
     {
@@ -48,7 +48,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Atualiza um usuário específico
      * @throws \Throwable
      */
     public function update(UpdateUserRequest $request, User $user)
@@ -58,7 +58,7 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Deleta um usuário específico
      */
     public function destroy(DeleteUserRequest $request, User $user)
     {

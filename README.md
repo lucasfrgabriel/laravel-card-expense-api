@@ -1,59 +1,165 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# API de Gerenciamento de Cartões e Despesas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
 
-## About Laravel
+## 💳 Sobre o projeto
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Esta é uma API robusta desenvolvida em Laravel 12 para gerenciar o ciclo de vida de cartões de crédito e o registro de despesas associadas. O sistema conta com controle de acesso baseado em perfis (Admin e Comum) e validações rigorosas de regras de negócio.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+O desenvolvimento é guiado por princípios de qualidade de software, como modularidade, Programação Orientada a Objetos (POO), padrões SOLID e uma cobertura de testes de integração.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## ⚡ Funcionalidades Principais
 
-## Learning Laravel
+### Usuários
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**Registro e Autenticação:** Cadastro de novos usuários e autenticação via tokens Laravel Sanctum.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Perfis de Acesso:** Distinção entre usuários admin e comum para controle de permissões.
 
-## Laravel Sponsors
+### Cartões
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Gestão Completa:** Criação, atualização, visualização e exclusão de cartões.
 
-### Premium Partners
+**Validação de Número:** Algoritmo integrado para validar números de cartão de crédito via teste de Luhn.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**Controle de Status:** Gerenciamento de estados do cartão: ativo, bloqueado ou cancelado.
 
-## Contributing
+**Depósitos:** Adição de saldo em cartões ativos.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Despesas
 
-## Code of Conduct
+**Registro de Gastos:** Criação de despesas vinculadas a cartões específicos.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Validação de Saldo:** Verificação automática de saldo insuficiente antes de processar compras.
 
-## Security Vulnerabilities
+**Notificações por E-mail:** Envio automático de alertas de novas despesas para o dono do cartão e cópia para administradores.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🛠️ Tecnologias Utilizadas
 
-## License
+- **PHP 8.3**
+- **Framework:** Laravel 12
+- **Autenticação:** Sanctum
+- **Banco de Dados:** SQLite
+- **Infraestrutura:** Docker e Docker Compose (PHP 8.3-FPM + Nginx)
+- **Testes:** PHPUnit 11.5
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 💻 Execução do Projeto
+
+**Pré-requisitos**
+- Docker instalado
+
+### 🔑 Variáveis de Ambiente
+
+Configuração de E-mail (MailerSend): Para o funcionamento dos alertas de despesas, crie um arquivo `.env` com base no `.env.example` e configure as seguintes chaves:
+- `MAILERSEND_API_KEY`: Sua chave de API.
+- `MAIL_FROM_ADDRESS`: E-mail remetente autorizado.
+- `MAIL_MAILER=mailersend`
+
+### 🚀 Instalação e execução
+
+1. Clonar o repositório
+```bash
+git clone https://github.com/lucasfrgabriel/laravel-card-expense-api.git
+cd laravel-card-expense-api
+```
+
+2. Subir os containers:
+```bash
+docker compose up -d --build
+```
+
+3. Acessear o container da aplicação:
+```bash
+ docker exec -it laravel_app bash
+```
+
+4. Gerar chave para aplicação e configurar o ambiente:
+```bash
+php artisan key:generate
+php artisan optimize:clear
+```
+
+Adicione a chave gerada no `.env` em `APP_KEY`.
+
+5. Executar as migrações (dentro do container):
+```bash
+php artisan migrate
+```
+
+## 🧪 Suíte de Testes
+O projeto possui cobertura de testes unitários e de integração para garantir a estabilidade das funções críticas.
+
+**Testes Unitários:** Validação isolada de Services e Utils.
+
+**Testes de Feature:** Validação de endpoints, fluxos de autenticação e permissões de acesso.
+
+**Para rodar os testes:**
+```bash
+php artisan test
+```
+
+## 📡 API
+
+### 📄 Documentação Interativa (Swagger/OpenAPI)
+A documentação completa dos endpoints, parâmetros e tipos de retorno está disponível em:
+[http://localhost:8080/docs/api](http://localhost:8080/docs/api)
+
+### Endpoints
+
+A paginação das listagens pode ser controlada através do parâmetro opcional ?paginate, permitindo definir o número de itens desejados por requisição. Os resultados são paginados por padrão (10 itens).
+
+#### Usuários
+| Verbo    | Endpoint              | Protegido? | Descrição                                      |
+|:---------|:----------------------|:-----------|:-----------------------------------------------|
+| `POST`   | `/api/login`          | ❌ Não      | Autenticação e obtenção de token de acesso     |
+| `POST`   | `/api/users/register` | ❌ Não      | Cadastra um novo usuário.                      |
+| `GET`    | `/api/users`          | ✅ Sim      | Lista todos os usuários.                       |
+| `GET`    | `/api/users/{user}`   | ✅ Sim      | Busca um usuário específico.                   |
+| `PATCH`  | `/api/users/{user}`   | ✅ Sim      | Atualiza informações de um usuário específico. |
+| `DELETE` | `/api/users/{user}`   | ✅ Sim      | Deleta um usuário específico.                  |
+
+#### Cartões
+| Verbo    | Endpoint                              | Protegido? | Descrição                                     |
+|:---------|:--------------------------------------|:-----------|:----------------------------------------------|
+| `POST`   | `/api/cards`                          | ✅ Sim      | Cadastra um novo cartão.                      |
+| `POST`   | `/api/cards/{card}/deposit`           | ✅ Sim      | Realiza um novo depósito no cartão.           |
+| `GET`    | `/api/cards`                          | ✅ Sim      | Lista todos os cartões.                       |
+| `GET`    | `/api/cards/{card}`                   | ✅ Sim      | Lista um cartão específico.                   |
+| `PATCH`  | `/api/cards/{card}`                   | ✅ Sim      | Atualiza informações de um cartão específico. |
+| `PATCH`  | `/api/cards/{card}/status`            | ✅ Sim      | Atualiza o status de um cartão específico.    |
+| `DELETE` | `/api/cards/{card}`                   | ✅ Sim      | Deleta um cartão específico.                  |
+
+#### Despesas
+| Verbo    | Endpoint                              | Protegido? | Descrição                                     |
+|:---------|:--------------------------------------|:-----------|:----------------------------------------------|
+| `POST`   | `/api/expenses`                       | ✅ Sim      | Cadastra uma nova despesa.                    |
+| `GET`    | `/api/expenses`                       | ✅ Sim      | Lista todas as despesas.                      |
+| `GET`    | `/api/expenses/{expense}`             | ✅ Sim      | Lista uma despesa específica.                 |
+| `DELETE` | `/api/expenses/{expense}`             | ✅ Sim      | Deleta uma despesa específica.                |
+
+## 🏗️ Estrutura de Pastas
+
+O projeto foi desenvolvido seguindo padrões que visam facilidade de manutenção e escalabilidade.
+
+```
+app
+├── Enums
+├── Events
+├── Exceptions
+│   ├── Cards
+│   ├── Expenses
+│   └── Users
+├── Http
+│   ├── Controllers
+│   ├── Requests
+│   │   ├── Cards
+│   │   ├── Expenses
+│   │   └── Users
+│   └── Resources
+├── Listeners
+├── Mail
+├── Models
+├── Policies
+├── Providers
+├── Repositories
+└── Services
+```

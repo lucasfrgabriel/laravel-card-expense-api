@@ -38,6 +38,7 @@ RUN chown -R www-data:www-data /var/www/storage \
     && chmod -R 775 /var/www/database
 
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --ignore-platform-reqs
+RUN composer install --no-interaction --optimize-autoloader --ignore-platform-reqs
 
 EXPOSE 9000
 

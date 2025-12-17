@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\AuthRequest;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    public function login(Request $request){
-        $credentials = $request->only('email', 'password');
+    /**
+     * Autenticação e obtenção de token de acesso
+     */
+    public function login(AuthRequest $request){
+        $credentials = $request->returnData();
 
         if(!Auth::attempt($credentials)){
             return response()->json(['error' => 'Unauthorized'], 401);

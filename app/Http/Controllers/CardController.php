@@ -20,7 +20,7 @@ class CardController extends Controller
     public function __construct(protected CardService $cardService, protected UserRepository $userRepository){}
 
     /**
-     * Display a listing of the resource.
+     * Lista todos os cartões (aceita paginação, por padrão exibe 10)
      */
     public function index(ViewAllCardsRequest $request)
     {
@@ -30,7 +30,7 @@ class CardController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Cria um novo cartão
      * @throws \Throwable
      */
     public function store(CreateCardRequest $request)
@@ -50,6 +50,7 @@ class CardController extends Controller
     }
 
     /**
+     * Altera o status de um cartão específico
      * @throws \Throwable
      */
     public function changeStatus(CardStatusRequest $request, Card $card): JsonResponse|CardResource
@@ -59,7 +60,7 @@ class CardController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Mostra um cartão específico
      */
     public function show(ViewSpecifiedCardRequest $request, Card $card)
     {
@@ -68,7 +69,7 @@ class CardController extends Controller
 
 
     /**
-     * Update the specified resource in storage.
+     * Atualiza um cartão específico
      * @throws \Throwable
      */
     public function update(UpdateCardRequest $request, Card $card)
@@ -78,7 +79,7 @@ class CardController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Deleta um cartão específico
      */
     public function destroy(DeleteCardRequest $request, Card $card)
     {

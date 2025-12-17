@@ -23,7 +23,7 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Lista todas as despesas (aceita paginação, por padrão exibe 10)
      */
     public function index(ViewAllExpensesRequest $request)
     {
@@ -33,7 +33,7 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Cria uma nova despesa
      * @throws \Throwable
      */
     public function store(CreateExpenseRequest $request): JsonResponse|ExpenseResource
@@ -43,7 +43,7 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Deleta uma despesa específica
      */
     public function destroy(DeleteExpenseRequest $request, Expense $expense)
     {
