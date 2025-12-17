@@ -10,7 +10,7 @@ class UserNotCreatedException extends HttpException
     public function __construct(Throwable $previous = null)
     {
         $code = 500;
-        $message = 'Ocorreu um erro inesperado ao criar o usuário.';
+        $message = $previous->getMessage() ?? 'Ocorreu um erro inesperado ao criar o usuário.';
         parent::__construct($code, $message, $previous);
     }
 }

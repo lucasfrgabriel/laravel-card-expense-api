@@ -2,15 +2,15 @@
 
 namespace App\Exceptions;
 
-use Exception;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
-class DepositFailedException extends Exception
+class DepositFailedException extends HttpException
 {
     public function __construct(Throwable $previous = null)
     {
         $code = 500;
-        $message = 'Ocorreu um erro inesperado ao registrar a despesa.';
+        $message = $previous->getMessage() ?? 'Ocorreu um erro inesperado ao registrar a despesa.';
         parent::__construct($code, $message, $previous);
     }
 }

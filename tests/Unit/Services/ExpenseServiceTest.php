@@ -3,23 +3,30 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\CardStatusEnum;
+use App\Events\NewExpenseEvent;
 use App\Exceptions\InsufficientBalanceException;
 use App\Models\Card;
 use App\Models\Expense;
+use App\Models\User;
 use App\Repositories\CardRepository;
 use App\Repositories\ExpenseRepository;
 use App\Services\ExpenseService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class ExpenseServiceTest extends TestCase
 {
+    use RefreshDatabase;
+
     private ExpenseService $service;
     private ExpenseRepository&MockObject $mockExpenseRepository;
     private CardRepository&MockObject $mockCardRepository;
 
     public function setUp(): void
     {
+        parent::setUp();
         $this->mockExpenseRepository = $this->createMock(ExpenseRepository::class);
         $this->mockCardRepository = $this->createMock(CardRepository::class);
         $this->service = new ExpenseService($this->mockExpenseRepository, $this->mockCardRepository);
@@ -49,58 +56,67 @@ class ExpenseServiceTest extends TestCase
 
     public function test_store_valid_expense(): void
     {
-        $mockCard = $this->getMockBuilder(Card::class)
-            ->onlyMethods(['save'])->getMock();
+        Event::fake();
 
-        $mockCard->id = 1;
-        $mockCard->balance = 100;
-        $mockCard->status = CardStatusEnum::Ativo;
+        $user = User::factory()->create();
+        $card = Card::factory()->create([
+            'user_id' => $user->id,
+            'number'  => '5599406865348101',
+            'balance' => 100.00,
+            'status'  => CardStatusEnum::Ativo
+        ]);
 
-        $expenseData = ['card_id' => $mockCard->id, 'amount' => 90, 'description' => 'test valid expense'];
-        $expectedExpense = new Expense($expenseData);
+        $amount = 90.00;
+        $description = 'test valid expense';
 
         $this->mockCardRepository->expects($this->once())
             ->method('find')
-            ->with($expectedExpense['card_id'])
-            ->willReturn($mockCard);
+            ->with($card->id)
+            ->willReturn($card);
+
+        $expectedExpense = new Expense([
+            'card_id'     => $card->id,
+            'amount'      => $amount,
+            'description' => $description
+        ]);
 
         $this->mockExpenseRepository->expects($this->once())
             ->method('create')
-            ->with($expenseData)
+            ->with($card->id, $amount, $description)
             ->willReturn($expectedExpense);
 
-        $mockCard->expects($this->once())
-            ->method('save')
-            ->willReturn(true);
+        $createdExpense = $this->service->store($card->id, $amount, $description);
 
-        $createdExpense = $this->service->store($expenseData);
-
-        $this->assertEquals($expectedExpense, $createdExpense);
-        $this->assertEquals($expectedExpense->card_id, $createdExpense->card_id);
         $this->assertEquals($expectedExpense->amount, $createdExpense->amount);
-        $this->assertEquals($expectedExpense->description, $createdExpense-> description);
+        $this->assertEquals($expectedExpense->description, $createdExpense->description);
+        $this->assertEquals($card->id, $createdExpense->card_id);
+
+        $this->assertEquals(10.00, $card->balance);
+
+        Event::assertDispatched(NewExpenseEvent::class);
     }
 
     public function test_store_invalid_expense(): void
     {
-        $mockCard = $this->getMockBuilder(Card::class)
-            ->onlyMethods(['save'])->getMock();
+        $user = User::factory()->create();
+        $card = Card::factory()->create([
+            'user_id' => $user->id,
+            'number'  => '5599406865348101',
+            'balance' => 100.00,
+            'status'  => CardStatusEnum::Ativo
+        ]);
 
-        $mockCard->id = 1;
-        $mockCard->balance = 100;
-        $mockCard->status = CardStatusEnum::Ativo;
-
-        $expenseData = ['card_id' => $mockCard->id, 'amount' => 200, 'description' => 'test valid expense'];
-        $expectedExpense = new Expense($expenseData);
+        $amount = 200.00;
+        $description = 'test valid expense';
 
         $this->mockCardRepository->expects($this->once())
             ->method('find')
-            ->with($expectedExpense['card_id'])
-            ->willReturn($mockCard);
+            ->with($card->id)
+            ->willReturn($card);
 
         $this->expectException(InsufficientBalanceException::class);
         $this->expectExceptionMessage('Saldo insuficiente.');
 
-        $this->service->store($expenseData);
+        $this->service->store($card->id, $amount, $description);
     }
 }

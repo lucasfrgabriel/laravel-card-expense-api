@@ -55,7 +55,7 @@ class NewExpenseAlert extends Mailable
     {
         return new Envelope(
             from: new Address(config('mail.from.address'), 'Alerta de Despesa'),
-            subject: 'Nova Despesa Registrada: R$ ' . number_format($this->data['amount'], 2, ',', '.'),
+            subject: 'Nova Despesa Registrada',
         );
     }
 }

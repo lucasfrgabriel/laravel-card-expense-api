@@ -267,7 +267,7 @@ class ExpenseControllerTest extends TestCase
     {
         return $response->assertStatus(403)
             ->assertJsonFragment([
-                'message' => 'This action is unauthorized.',
+                'error' => 'This action is unauthorized.',
             ]);
     }
 

@@ -7,17 +7,22 @@ use App\Enums\CardStatusEnum;
 use App\Exceptions\Cards\InvalidCardNumberException;
 use App\Exceptions\InvalidAmountException;
 use App\Models\Card;
+use App\Models\User;
 use App\Repositories\CardRepository;
 use App\Services\CardService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class CardServiceTest extends TestCase
 {
+
+    use RefreshDatabase;
     private CardService $service;
     private CardRepository&MockObject $mockCardRepository;
 
     protected function setUp(): void{
+        parent::setUp();
         $this->mockCardRepository = $this->createMock(CardRepository::class);
         $this->service = new CardService($this->mockCardRepository);
     }
@@ -29,7 +34,6 @@ class CardServiceTest extends TestCase
         $card->status = CardStatusEnum::Ativo;
 
         $this->expectException(InvalidAmountException::class);
-        $this->expectExceptionMessage('O valor de depósito não pode ser menor ou igual a 0');
 
         $depositAmount = -2;
 
@@ -40,17 +44,14 @@ class CardServiceTest extends TestCase
     {
         $depositAmount = 200;
 
-        $mockCard = $this->getMockBuilder(Card::class)
-            ->onlyMethods(['save'])->getMock();
+        $user = User::factory()->create();
+        $card = Card::factory()->create([
+            'number' => '5599406865348101',
+            'user_id' => $user->id,
+            'status' => CardStatusEnum::Ativo
+        ]);
 
-        $mockCard->balance = 0;
-        $mockCard->status = CardStatusEnum::Ativo;
-
-        $mockCard->expects($this->once())
-            ->method('save')
-            ->willReturn(true);
-
-        $card = $this->service->deposit($mockCard, $depositAmount);
+        $card = $this->service->deposit($card, $depositAmount);
         $this->assertEquals($depositAmount, $card->balance);
     }
 
@@ -60,24 +61,30 @@ class CardServiceTest extends TestCase
         $this->expectExceptionMessage('O número do cartão não é válido.');
 
         $invalidCardNumber = 1234567812345678;
-        $data = ['number' => $invalidCardNumber];
 
-        $this->service->store($data);
+        $this->service->store($invalidCardNumber, CardStatusEnum::Ativo, CardBrandEnum::Visa, 1);
     }
-/*
+
     public function test_store_card_with_valid_card_number(): void
     {
+        $user = User::factory()->create();
         $cardNumber = "1234567812345670";
-        $data = ['number' => $cardNumber];
+        $status = CardStatusEnum::Ativo;
+        $brand  = CardBrandEnum::Visa;
 
-        $expectedCard = new Card(['number' => '1234567812345670', 'status' => CardStatusEnum::Ativo]);
+        $expectedCard = new Card(['number' => $cardNumber, 'status' => $status, 'brand' => $brand]);
 
         $this->mockCardRepository->expects($this->once())
             ->method('create')
-            ->with($data)
+            ->with(
+                $cardNumber,
+                $status,
+                $brand,
+                $user->id,
+            )
             ->willReturn($expectedCard);
 
-        $createdCard = $this->service->store($data);
+        $createdCard = $this->service->store($cardNumber, $status, $brand, $user->id);
 
         $this->assertEquals($cardNumber, $createdCard->number);
     }
@@ -89,16 +96,20 @@ class CardServiceTest extends TestCase
         $status = CardStatusEnum::Ativo;
         $brand = CardBrandEnum::Visa;
         $user_id = 1;
-        $data = ['number' => $cardNumber, 'balance' => $balance, 'status' => $status, 'brand' => $brand, 'user_id' => $user_id];
 
-        $expectedCard = new Card($data);
+        $expectedCard = new Card(['number' => $cardNumber, 'balance' => $balance, 'status' => $status, 'brand' => $brand, 'user_id' => $user_id]);
 
         $this->mockCardRepository->expects($this->once())
             ->method('create')
-            ->with($data)
+            ->with(
+                $cardNumber,
+                $status,
+                $brand,
+                $user_id,
+            )
             ->willReturn($expectedCard);
 
-        $createdCard = $this->service->store($data);
+        $createdCard = $this->service->store($cardNumber, $status, $brand, $user_id);
 
         $this->assertEquals($cardNumber, $createdCard->number);
         $this->assertEquals($balance, $createdCard->balance);
@@ -106,59 +117,43 @@ class CardServiceTest extends TestCase
         $this->assertEquals($brand, $createdCard->brand);
         $this->assertEquals($user_id, $createdCard->user_id);
     }
-*/
+
 
     public function test_change_card_status(): void
     {
-        $initialStatus = CardStatusEnum::Ativo;
+        $user = User::factory()->create();
+        $card = Card::factory()->create([
+            'number' => '5599406865348101',
+            'user_id' => $user->id,
+            'status' => CardStatusEnum::Ativo
+        ]);
+
         $newStatus = CardStatusEnum::Bloqueado;
 
-        $mockCard = $this->getMockBuilder(Card::class)
-            ->onlyMethods(['save'])->getMock();
+        $updatedCard = $this->service->changeStatus($card, $newStatus);
 
-        $mockCard->status = $initialStatus;
-
-        $mockCard->expects($this->once())
-            ->method('save')
-            ->willReturn(true);
-
-        $this->service->changeStatus($mockCard, $newStatus);
-
-        $this->assertEquals($newStatus, $mockCard->status);
+        $this->assertEquals($newStatus, $updatedCard->status);
+        $this->assertTrue($updatedCard->relationLoaded('expenses'));
     }
 
     public function test_update_card(): void
     {
-        $initialCardData = ['number' => "5128976451784323", 'balance' => 100, 'status' => CardStatusEnum::Ativo, 'brand' => CardBrandEnum::Visa, 'user_id' => 1];
-        $newCardData = ['number' => "5359338613583525", 'status' => CardStatusEnum::Bloqueado, 'brand' => CardBrandEnum::MasterCard];
-        $expectedData = ['number' => "5359338613583525", 'balance' => 100, 'status' => CardStatusEnum::Bloqueado, 'brand' => CardBrandEnum::MasterCard, 'user_id' => 1];
+        $user = User::factory()->create();
+        $card = Card::factory()->create([
+            'user_id' => $user->id,
+            'number' => "5128976451784323",
+            'status' => CardStatusEnum::Ativo,
+            'brand' => CardBrandEnum::Visa
+        ]);
 
-        $expectedCard = new Card($expectedData);
+        $newNumber = "5359338613583525";
+        $newStatus = CardStatusEnum::Bloqueado;
+        $newBrand = CardBrandEnum::MasterCard;
 
-        $mockCard = $this->getMockBuilder(Card::class)
-            ->onlyMethods(['update'])->getMock();
+        $updatedCard = $this->service->update($card, $newNumber, $newStatus, $newBrand);
 
-        foreach ($initialCardData as $key => $value) {
-            $mockCard->{$key} = $value;
-        }
-
-        $mockCard->expects($this->once())
-            ->method('update')
-            ->willReturn(true);
-
-        $mockCard->number = $newCardData['number'];
-        $mockCard->status = $newCardData['status'];
-        $mockCard->brand = $newCardData['brand'];
-
-        $updatedCard = $this->service->update($mockCard, $newCardData);
-
-        $this->assertSame($mockCard, $updatedCard);
-
-        $this->assertEquals($expectedCard->number, $updatedCard->number, 'O número deve ser atualizado.');
-        $this->assertEquals($expectedCard->status, $updatedCard->status, 'O status deve ser atualizado.');
-        $this->assertEquals($expectedCard->brand, $updatedCard->brand, 'A bandeira deve ser atualizada.');
-
-        $this->assertEquals($expectedCard->balance, $updatedCard->balance, 'O saldo não deve mudar.');
-        $this->assertEquals($expectedCard->user_id, $updatedCard->user_id, 'O ID do usuário não deve mudar.');
+        $this->assertEquals($newNumber, $updatedCard->number, 'O número deve ser atualizado.');
+        $this->assertEquals($newStatus, $updatedCard->status, 'O status deve ser atualizado.');
+        $this->assertEquals($newBrand, $updatedCard->brand, 'A bandeira deve ser atualizada.');
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\NewExpenseEvent;
-use App\Http\Requests\ExpenseRequest;
+use App\Http\Requests\Expenses\CreateExpenseRequest;
+use App\Http\Requests\Expenses\DeleteExpenseRequest;
+use App\Http\Requests\Expenses\ViewAllExpensesRequest;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
 use App\Repositories\UserRepository;
@@ -23,50 +25,28 @@ class ExpenseController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ViewAllExpensesRequest $request)
     {
-        $this->authorize('viewAny', Expense::class);
-        $expenses = Expense::all();
-        return ExpenseResource::collection($expenses);
+        $paginate = $request->getPaginate();
+        $expenses = Expense::paginate($paginate);
+        return ExpenseResource::collection($expenses->getCollection());
     }
 
     /**
      * Store a newly created resource in storage.
      * @throws \Throwable
      */
-    public function store(ExpenseRequest $request): JsonResponse|ExpenseResource
+    public function store(CreateExpenseRequest $request): JsonResponse|ExpenseResource
     {
-        $cardOwner = $this->userRepository->findUserByCardId($request->card_id);
-        $this->authorize('createFor', [Expense::class, $cardOwner]);
-
-        DB::beginTransaction();
-
-        try{
-            $validated = $request->validated();
-            $data = array_merge($validated, ['date' => date_create(now())->format('Y-m-d')]);
-
-            $expense = $this->expenseService->store($data);
-
-            event(new NewExpenseEvent($data));
-
-            DB::commit();
-
-            return new ExpenseResource($expense);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Error processing expense.',
-                'error' => $e->getMessage()
-            ], 400);
-        }
+        $expense = $this->expenseService->store($request->getCardId(), $request->getAmount(), $request->getDescription());
+        return new ExpenseResource($expense);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Expense $expense)
+    public function destroy(DeleteExpenseRequest $request, Expense $expense)
     {
-        $this->authorize('delete', $expense);
         $expense->delete();
         return response()->noContent();
     }

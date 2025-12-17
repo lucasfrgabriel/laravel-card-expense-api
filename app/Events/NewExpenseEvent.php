@@ -2,11 +2,8 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
+use App\Models\Expense;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -14,14 +11,14 @@ class NewExpenseEvent
 {
     use Dispatchable, SerializesModels;
 
-    public array $data;
+    public Expense $expense;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($data)
+    public function __construct(Expense $expense)
     {
-        $this->data = $data;
+        $this->expense = $expense;
     }
 
     /**

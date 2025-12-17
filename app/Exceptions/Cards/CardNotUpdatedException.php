@@ -10,7 +10,7 @@ class CardNotUpdatedException extends HttpException
     public function __construct(Throwable $previous = null)
     {
         $code = 500;
-        $message = 'Ocorreu um erro inesperado ao atualizar o cartão.';
+        $message = $previous->getMessage() ?? 'Ocorreu um erro inesperado ao atualizar o cartão.';
         parent::__construct($code, $message, $previous);
     }
 }
